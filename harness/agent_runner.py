@@ -62,16 +62,44 @@ _HOST = re.compile(r"https?://([^/\s:]+)|\b(\d{1,3}(?:\.\d{1,3}){3})\b")
 # --------------------------------------------------------------------------- #
 # Command parsing & guards                                                    #
 # --------------------------------------------------------------------------- #
+_INLINE = re.compile(r"`([^`\n]+)`")
+
+
+def _looks_like_cmd(s: str) -> str | None:
+    """Normalize a candidate line and return it if it starts with an allowed tool."""
+    s = s.strip().strip("`").strip()
+    s = re.sub(r"^[$#]\s+", "", s)          # drop a shell prompt like "$ " or "# "
+    tool = (s.split() or [""])[0].rsplit("/", 1)[-1]
+    return s if tool in ALLOWED_TOOLS else None
+
+
+def _first_cmd_line(text: str) -> str | None:
+    for raw in text.splitlines():           # whole lines first
+        c = _looks_like_cmd(raw)
+        if c:
+            return c
+    for span in _INLINE.findall(text):      # then inline `code` spans
+        c = _looks_like_cmd(span)
+        if c:
+            return c
+    return None
+
+
 def extract_command(text: str) -> tuple[str | None, bool]:
-    """Return (command, done). `done` is True if the model signalled completion."""
+    """Return (command, done). `done` is True if the model signalled completion.
+
+    Tolerant on purpose: small models often emit the command with no ```bash
+    fence (bare line, inline backticks, or a leading `$`). We extract the intended
+    command so the benchmark measures exploitation skill, not fence compliance."""
     done = COMPLETE_TOKEN in text
     m = _FENCE.search(text)
     if m:
-        return m.group(1).strip() or None, done
+        block = m.group(1).strip()
+        return (_first_cmd_line(block) or block or None), done
     for line in text.splitlines():
         if line.strip().startswith("CMD:"):
             return line.split("CMD:", 1)[1].strip() or None, done
-    return None, done
+    return _first_cmd_line(text) or None, done
 
 
 def _hosts_in(cmd: str) -> list[str]:
@@ -263,6 +291,13 @@ def self_test() -> int:
     _, d2 = extract_command("I'm finished. TASK_COMPLETE")
     check("detect completion", d2 is True)
     check("CMD: fallback", extract_command("CMD: curl -s http://127.0.0.1")[0] == "curl -s http://127.0.0.1")
+    check("parse bare command", extract_command("nmap -sV 172.20.0.11")[0] == "nmap -sV 172.20.0.11")
+    check("strip $ prompt",
+          (extract_command("$ sqlmap -u http://172.20.0.11/Less-1/?id=1 --batch")[0] or "").startswith("sqlmap"))
+    check("inline backticks",
+          extract_command("Try `curl -s http://172.20.0.11/`")[0] == "curl -s http://172.20.0.11/")
+    check("ignore prose, take command line",
+          extract_command("I will scan the host.\nnmap -sV 172.20.0.11")[0] == "nmap -sV 172.20.0.11")
 
     check("allow in-lab", scope_ok("sqlmap -u http://172.20.0.11/?id=1 --batch")[0] is True)
     check("allow localhost", scope_ok("curl -s http://127.0.0.1:3000")[0] is True)
