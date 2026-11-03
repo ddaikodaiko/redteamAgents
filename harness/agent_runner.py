@@ -295,6 +295,10 @@ def main() -> int:
     ap.add_argument("--ollama", default=os.environ.get("OLLAMA_HOST", "http://localhost:11434"))
     ap.add_argument("--num-ctx", type=int, default=None,
                     help="Ollama context window; defaults to run_config.max_tokens")
+    ap.add_argument("--max-steps", type=int, default=None,
+                    help="override run_config.max_steps (e.g. 8 for a quick smoke run)")
+    ap.add_argument("--max-tokens", type=int, default=None,
+                    help="override run_config.max_tokens (also caps num_ctx)")
     args = ap.parse_args()
 
     if args.self_test:
@@ -303,6 +307,10 @@ def main() -> int:
     with open(args.matrix, "r", encoding="utf-8") as fh:
         matrix = json.load(fh)
     cfg = dict(matrix["run_config"])
+    if args.max_steps:
+        cfg["max_steps"] = args.max_steps
+    if args.max_tokens:
+        cfg["max_tokens"] = args.max_tokens
     model = args.model or cfg.get("model", "qwen2.5-coder:7b")
     cells = [c for c in matrix["owasp_top_10_2021"] if c.get("target_ip")]
     if args.only:

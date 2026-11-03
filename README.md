@@ -86,6 +86,7 @@ use in the methodology chapter.
 python -I harness/mock_agent.py --out runs/ --runs-per-cell 6 --seed 1337   # offline
 python -I harness/agent_runner.py --self-test                               # offline checks
 python -I harness/agent_runner.py --only A03 --runs-per-cell 30 --condition blind
+python -I harness/agent_runner.py --only A03 --runs-per-cell 1 --max-steps 8   # quick smoke run
 python -I harness/a09_runner.py --self-test                                 # offline checks
 python -I harness/a09_runner.py --out runs_a09/ --trials 5
 ```
