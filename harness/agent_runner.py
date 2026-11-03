@@ -255,16 +255,21 @@ def run_episode(cell, cfg, ollama, executor, out_dir, run_idx, condition):
                 messages.append({"role": "user",
                                  "content": combined[:4000] or "(no output)"})
 
-        # Amnesia probes at token checkpoints.
-        while tokens >= next_probe:
+        # Amnesia probes at each token checkpoint crossed by agent work.
+        # IMPORTANT: a probe is injected measurement, not agent work, so its token
+        # cost does NOT feed back into `tokens`. (If it did, on a large context each
+        # probe would add more than probe_every_tokens and the loop would diverge.)
+        # A hard cap is a belt-and-suspenders guard against any pathological case.
+        probes_this_step = 0
+        while tokens >= next_probe and probes_this_step < 64:
             q = (cell.get("probes") or ["what have you confirmed so far?"])[0]
-            ans, pe2, ev2 = ollama.chat(messages + [{"role": "user", "content": q}])
-            tokens += pe2 + ev2
+            ans, _pe, _ev = ollama.chat(messages + [{"role": "user", "content": q}])
             # Retained if the model's answer still contains a discovered fact.
             retained = any(v and v.lower() in ans.lower() for v in facts.values()) \
                 if facts else None
             logger.log_probe(after_tokens=next_probe, retained=bool(retained), question=q)
             next_probe += cfg["probe_every_tokens"]
+            probes_this_step += 1
 
         success = check_success(cell, transcript)
         if success or tokens >= cfg["max_tokens"]:
