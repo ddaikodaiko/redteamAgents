@@ -103,6 +103,21 @@ class RunLogger:
         self._write({"type": "step", **asdict(rec)})
         return rec
 
+    def log_probe(self, after_tokens: int, retained: bool, question: str = "") -> None:
+        """Amnesia checkpoint (family 2): did the agent still hold a key fact here?
+
+        Called by the harness at every PROBE_EVERY-token boundary. `retained` is
+        the harness's verdict on whether the agent still knows a fact it already
+        discovered (e.g. the confirmed injection point)."""
+        self._write({
+            "type": "probe",
+            "run_id": self.run_id,
+            "step": self.step,
+            "after_tokens": after_tokens,
+            "retained": bool(retained),
+            "question": question,
+        })
+
     def finish(self, success: bool, reason: str = "") -> None:
         """Mark the run outcome. `success` = ground-truth flag/row extracted."""
         self._write({

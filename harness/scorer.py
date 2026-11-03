@@ -52,7 +52,7 @@ def _norm(cmd: str) -> float:
 
 
 def load_run(path: str) -> dict:
-    header, steps, footer = {}, [], {}
+    header, steps, probes, footer = {}, [], [], {}
     with open(path, "r", encoding="utf-8") as fh:
         for line in fh:
             line = line.strip()
@@ -64,9 +64,12 @@ def load_run(path: str) -> dict:
                 header = obj
             elif t == "step":
                 steps.append(obj)
+            elif t == "probe":
+                probes.append(obj)
             elif t == "footer":
                 footer = obj
-    return {"header": header, "steps": steps, "footer": footer, "path": path}
+    return {"header": header, "steps": steps, "probes": probes,
+            "footer": footer, "path": path}
 
 
 # ----------------------------- Metric family 1 -----------------------------
@@ -218,9 +221,33 @@ def score_run(run: dict) -> RunScore:
         steps=len(steps),
         success=run["footer"].get("success"),
         loops=loop_metrics(steps),
-        amnesia=amnesia_metrics(steps),
+        amnesia=amnesia_metrics(steps, run.get("probes")),
         hallucination=hallucination_metrics(steps),
     )
+
+
+def _fmt(v: Optional[float]) -> str:
+    return "  -- " if v is None else f"{v:.2f}"
+
+
+def aggregate(scores: list[RunScore]) -> dict:
+    """Cross-run averages for the per-run families (1-3)."""
+    import statistics
+
+    def mean(xs):
+        xs = [x for x in xs if x is not None]
+        return round(statistics.fmean(xs), 4) if xs else None
+
+    n = len(scores)
+    return {
+        "runs": n,
+        "success_rate": round(sum(1 for s in scores if s.success) / n, 4) if n else None,
+        "mean_steps": mean([s.steps for s in scores]),
+        "mean_loop_entry_rate": mean([s.loops["loop_entry_rate"] for s in scores]),
+        "mean_redundant_action_ratio": mean([s.loops["redundant_action_ratio"] for s in scores]),
+        "mean_command_validity": mean([s.hallucination["command_validity_rate"] for s in scores]),
+        "mean_fact_retention": mean([s.amnesia["fact_retention_rate"] for s in scores]),
+    }
 
 
 def _collect(arg: str) -> list[str]:
@@ -239,8 +266,11 @@ def main(argv: list[str]) -> int:
         return 1
 
     runs = [load_run(p) for p in paths]
-    for r in runs:
-        s = score_run(r)
+    scores = [score_run(r) for r in runs]
+
+    if len(scores) == 1:
+        # Single run: full detail is useful.
+        s = scores[0]
         print(json.dumps({
             "run": os.path.basename(s.path),
             "target": s.target,
@@ -251,10 +281,20 @@ def main(argv: list[str]) -> int:
             "family2_amnesia": s.amnesia,
             "family3_hallucination": s.hallucination,
         }, ensure_ascii=False, indent=2))
+        return 0
 
-    if len(runs) > 1:
-        print("\n=== family4_exhaustion (across runs) ===")
-        print(json.dumps(exhaustion_point(runs), ensure_ascii=False, indent=2))
+    # Many runs: one compact line each, then aggregates and the exhaustion curve.
+    print(f"# {len(scores)} runs")
+    for s in scores:
+        print(f"{os.path.basename(s.path):26} {s.target:14} steps={s.steps:>3} "
+              f"success={str(s.success):5} loop={s.loops['loop_entry_rate']:.2f} "
+              f"valid={_fmt(s.hallucination['command_validity_rate'])} "
+              f"retain={_fmt(s.amnesia['fact_retention_rate'])}")
+
+    print("\n=== aggregate (families 1-3) ===")
+    print(json.dumps(aggregate(scores), ensure_ascii=False, indent=2))
+    print("\n=== family4_exhaustion (across runs) ===")
+    print(json.dumps(exhaustion_point(runs), ensure_ascii=False, indent=2))
     return 0
 
 
