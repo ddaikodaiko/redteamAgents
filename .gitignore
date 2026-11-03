@@ -1,0 +1,14 @@
+# Run logs produced by the harness
+run_*.jsonl
+runs/
+*.jsonl
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db

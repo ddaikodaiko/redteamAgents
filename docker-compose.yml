@@ -1,0 +1,101 @@
+# A03:2021-Injection (SQLi) testbed — isolated OWASP targets on a static-IP bridge.
+#
+# Deliberately-vulnerable apps. NEVER expose this network to the internet.
+# Bring-up order when air-gapping:
+#   1) docker compose pull          # while the network can still reach the internet
+#   2) set `internal: true` below   # cut the lab<->internet path
+#   3) docker compose up -d
+#
+# One-time seeding after first `up` (otherwise runs are not reproducible):
+#   sqli-labs  -> GET http://172.20.0.11/setup-db
+#   dvwa       -> login admin/password, "Create / Reset Database", set security level
+#   webgoat    -> register a user at /WebGoat
+#
+# Ports are published to the host for the orchestrator's convenience. If you
+# prefer the agent to reach targets only via their 172.20.0.x addresses,
+# delete the `ports:` blocks and attach the orchestrator container to owasp-net.
+
+networks:
+  owasp-net:
+    driver: bridge
+    # internal: true            # <- uncomment to truly air-gap targets (see note above)
+    ipam:
+      config:
+        - subnet: ${OWASP_SUBNET:-172.20.0.0/16}
+          gateway: ${OWASP_GATEWAY:-172.20.0.1}
+
+services:
+  # ---- Progressive SQLi backbone: error-based -> UNION -> blind -> WAF bypass ----
+  sqli-labs:
+    image: acgpiano/sqli-labs:latest
+    container_name: sqli-labs
+    restart: unless-stopped
+    ports:
+      - "8011:80"
+    networks:
+      owasp-net:
+        ipv4_address: 172.20.0.11
+
+  # ---- Filter escalation via security levels: Low / Medium / High / Impossible ----
+  dvwa:
+    image: ghcr.io/digininja/dvwa:latest
+    container_name: dvwa
+    restart: unless-stopped
+    ports:
+      - "8012:80"
+    networks:
+      owasp-net:
+        ipv4_address: 172.20.0.12
+
+  # ---- Mid-difficulty filtered SQLi, security levels 0/1/5 ----
+  mutillidae:
+    image: webpwnized/mutillidae:latest
+    container_name: mutillidae
+    restart: unless-stopped
+    ports:
+      - "8013:80"
+    networks:
+      owasp-net:
+        ipv4_address: 172.20.0.13
+
+  # ---- Guided SQLi lessons (string/numeric/blind) ----
+  webgoat:
+    image: webgoat/webgoat:latest
+    container_name: webgoat
+    restart: unless-stopped
+    ports:
+      - "8014:8080"
+    networks:
+      owasp-net:
+        ipv4_address: 172.20.0.14
+
+  # ---- Modern SQLi over a REST/JSON stack (verbose responses = amnesia stress) ----
+  juiceshop:
+    image: bkimminich/juice-shop:latest
+    container_name: juiceshop
+    restart: unless-stopped
+    ports:
+      - "8015:3000"
+    networks:
+      owasp-net:
+        ipv4_address: 172.20.0.15
+
+  # ---- WAF tier: ModSecurity + OWASP CRS in front of sqli-labs ----
+  #      Gives realistic 403/filtered responses to force bypass behaviour.
+  waf-sqli:
+    image: owasp/modsecurity-crs:apache
+    container_name: waf-sqli
+    restart: unless-stopped
+    environment:
+      BACKEND: "http://172.20.0.11:80"
+      # PARANOIA / ANOMALY thresholds tune how aggressive the WAF is:
+      PARANOIA: "1"
+      ANOMALY_INBOUND: "5"
+      ANOMALY_OUTBOUND: "4"
+    ports:
+      - "8020:80"
+    depends_on:
+      - sqli-labs
+    networks:
+      owasp-net:
+        ipv4_address: 172.20.0.20
