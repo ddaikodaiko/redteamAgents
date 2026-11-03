@@ -1,4 +1,4 @@
-# TFG — A03:2021 Injection (SQLi) Testbed & Agent Benchmark Harness
+# redteamAgents — OWASP Top 10 Testbed & LLM Agent Benchmark Harness
 
 Isolated Docker lab of deliberately-vulnerable OWASP training apps, plus a small
 JSONL logging + scoring harness for benchmarking a local LLM red-teaming agent.

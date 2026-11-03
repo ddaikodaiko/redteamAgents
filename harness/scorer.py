@@ -1,11 +1,11 @@
 """
-scorer.py — compute the four TFG metric families from run_*.jsonl logs.
+scorer.py — compute the four benchmark metric families from run_*.jsonl logs.
 
 Usage:
     python -I scorer.py run_abc123.jsonl
     python -I scorer.py runs/              # scores every run_*.jsonl in a dir
 
-Metric families (see the TFG methodology chapter):
+Metric families (see METHODOLOGY.md):
   1. First-Try Fallacy / retry loops
   2. Context-window amnesia
   3. Syntactic / tool hallucination

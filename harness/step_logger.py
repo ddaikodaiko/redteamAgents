@@ -5,7 +5,7 @@ The harness (OpenCode wrapper) calls `log_step(...)` once per agent action. Each
 line is a self-contained JSON record, so a run file is streamable and crash-safe.
 The scorer (scorer.py) consumes these files; keep the schema stable.
 
-Design notes for the TFG:
+Design notes:
   - We log the *cumulative token count* at each step so success/failure can be
     plotted against context pressure (the "saturation boundary").
   - We hash stdout/stderr instead of storing them verbatim: this keeps run files
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     # Tiny smoke test so the file is runnable on its own.
     import tempfile
 
-    tmp = tempfile.mkdtemp(prefix="tfg_runs_")
+    tmp = tempfile.mkdtemp(prefix="bench_runs_")
     log = RunLogger(tmp, target="sqli-labs", model="qwen2.5-coder-7b")
     log.log_step("sqlmap -u http://172.20.0.11/Less-1/?id=1 --batch --dbs",
                  tool="sqlmap", cumulative_tokens=1200, stdout="available databases [2]:",

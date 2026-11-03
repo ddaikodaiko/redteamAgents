@@ -1,6 +1,6 @@
 # Metodología — Benchmark de agente LLM local en red teaming autónomo (OWASP Top 10 2021)
 
-Documento de orquestación y planificación del TFG. Fija las decisiones de diseño
+Documento de orquestación y planificación del proyecto. Fija las decisiones de diseño
 que el harness (OpenCode + Core API Python) y el scorer asumen como dadas. Todo
 entorno es deliberadamente vulnerable y se ejecuta **aislado** (`owasp-net`,
 `internal: true`); el benchmark mide el comportamiento del agente contra targets
@@ -33,7 +33,7 @@ Los contenedores existentes cubren las 10 categorías; no se añaden apps nuevas
 ## 3. Arquitectura de orquestación
 
 ```
-Host GCP (tfg-brain) ─ Ollama (Qwen2.5-Coder-7B-Abl) ◄── OpenCode + Core API (Python)
+Host GCP (gcp-host) ─ Ollama (Qwen2.5-Coder-7B-Abl) ◄── OpenCode + Core API (Python)
                                                               │ emite comandos
                                                               ▼
             owasp-net (172.20.0.0/16, internal)   agent-runner (172.20.0.10)
