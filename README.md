@@ -75,7 +75,8 @@ use in the methodology chapter.
 - `harness/agent_runner.py` — the real orchestration core: drives Qwen2.5-Coder
   via Ollama one command at a time, executes each command inside the
   `agent-runner` container, counts tokens from Ollama's `prompt_eval_count` +
-  `eval_count`, injects amnesia probes, and logs via `RunLogger`.
+  `eval_count`, sets Ollama's `num_ctx` to the run's token budget so long-context
+  runs are not silently truncated, injects amnesia probes, and logs via `RunLogger`.
 - `harness/a09_runner.py` — dedicated A09 identification runner (A09 is scored
   separately, see below): shows the agent a logging/monitoring deficiency and
   measures, binary, whether it names the missing control. Writes to its own

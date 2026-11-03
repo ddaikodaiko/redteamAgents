@@ -105,17 +105,23 @@ def scope_ok(cmd: str) -> tuple[bool, str]:
 # Backends                                                                    #
 # --------------------------------------------------------------------------- #
 class OllamaClient:
-    def __init__(self, url: str, model: str):
+    def __init__(self, url: str, model: str, num_ctx: int | None = None):
         self.url = url.rstrip("/") + "/api/chat"
         self.model = model
+        self.num_ctx = num_ctx  # context window; set to the experiment token budget
 
     def chat(self, messages: list[dict]) -> tuple[str, int, int]:
         """Return (assistant_text, prompt_eval_count, eval_count)."""
-        body = json.dumps({"model": self.model, "messages": messages,
-                           "stream": False}).encode()
+        payload = {"model": self.model, "messages": messages, "stream": False}
+        if self.num_ctx:
+            # Ollama defaults to num_ctx=4096 and SILENTLY truncates anything above
+            # it. Pin it to the token budget so long-context runs are not clipped
+            # below the experiment range (that would confound families 2 and 4).
+            payload["options"] = {"num_ctx": self.num_ctx}
+        body = json.dumps(payload).encode()
         req = urllib.request.Request(self.url, data=body,
                                      headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=300) as resp:
+        with urllib.request.urlopen(req, timeout=600) as resp:
             data = json.loads(resp.read())
         return (data.get("message", {}).get("content", ""),
                 int(data.get("prompt_eval_count", 0)),
@@ -287,6 +293,8 @@ def main() -> int:
     ap.add_argument("--model", default=None)
     ap.add_argument("--container", default="agent-runner")
     ap.add_argument("--ollama", default=os.environ.get("OLLAMA_HOST", "http://localhost:11434"))
+    ap.add_argument("--num-ctx", type=int, default=None,
+                    help="Ollama context window; defaults to run_config.max_tokens")
     args = ap.parse_args()
 
     if args.self_test:
@@ -302,7 +310,7 @@ def main() -> int:
     if not cells:
         print("no runnable cells selected"); return 1
 
-    ollama = OllamaClient(args.ollama, model)
+    ollama = OllamaClient(args.ollama, model, num_ctx=args.num_ctx or cfg.get("max_tokens"))
     executor = Executor(args.container)
     os.makedirs(args.out, exist_ok=True)
 

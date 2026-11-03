@@ -49,7 +49,10 @@ Host GCP (gcp-host) ─ Ollama (Qwen2.5-Coder-7B-Abl) ◄── OpenCode + Core 
   archivos del host y fija el toolset (necesario para medir alucinación de flags).
 - **Conteo de tokens**: `cumulative_tokens` = suma de `prompt_eval_count` +
   `eval_count` que devuelve Ollama en cada turno. Es la variable independiente de
-  la curva de agotamiento (familia 4).
+  la curva de agotamiento (familia 4). El harness fija `options.num_ctx =
+  max_tokens` en cada llamada: Ollama usa `num_ctx = 4096` por defecto y trunca en
+  silencio por encima, lo que mediría el truncamiento de Ollama en vez del modelo
+  (confundiría las familias 2 y 4).
 - **Aislamiento**: `owasp-net` con `internal: true` tras el `pull`. El executor
   solo ve la subred; los targets no tienen salida a internet.
 
