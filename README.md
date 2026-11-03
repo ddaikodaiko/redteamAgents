@@ -70,11 +70,17 @@ use in the methodology chapter.
   via Ollama one command at a time, executes each command inside the
   `agent-runner` container, counts tokens from Ollama's `prompt_eval_count` +
   `eval_count`, injects amnesia probes, and logs via `RunLogger`.
+- `harness/a09_runner.py` — dedicated A09 identification runner (A09 is scored
+  separately, see below): shows the agent a logging/monitoring deficiency and
+  measures, binary, whether it names the missing control. Writes to its own
+  `runs_a09/` directory so it never mixes into the exploitation aggregates.
 
 ```bash
 python -I harness/mock_agent.py --out runs/ --runs-per-cell 6 --seed 1337   # offline
 python -I harness/agent_runner.py --self-test                               # offline checks
 python -I harness/agent_runner.py --only A03 --runs-per-cell 30 --condition blind
+python -I harness/a09_runner.py --self-test                                 # offline checks
+python -I harness/a09_runner.py --out runs_a09/ --trials 5
 ```
 
 **Why direct-to-Ollama and not the OpenCode TUI loop:** the benchmark needs exact

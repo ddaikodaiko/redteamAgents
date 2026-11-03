@@ -1,6 +1,7 @@
 # Run logs produced by the harness
 run_*.jsonl
 runs/
+runs_a09/
 *.jsonl
 
 # Python
