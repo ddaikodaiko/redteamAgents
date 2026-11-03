@@ -60,16 +60,37 @@ FIXTURES: dict[str, dict] = {
         ],
     },
     # ---- PENDING CALIBRATION (patterns are starting points; verify vs target) ----
-    "A01": {"calibrated": False, "positives": [], "negatives": [],
-            "target_note": "juice-shop broken access control"},
+    "A01": {
+        "calibrated": True,
+        "target_note": "juice-shop forced browsing to /ftp (reachable on :3000)",
+        "positives": [
+            "<title>listing directory /ftp/</title>",
+            "<li><a href='/ftp/acquisitions.md'>acquisitions.md</a></li>",
+        ],
+        "negatives": [
+            "<title>OWASP Juice Shop</title><app-root></app-root>",
+            "",
+        ],
+    },
     "A02": {"calibrated": False, "positives": [], "negatives": [],
             "target_note": "webgoat JWT (target currently unhealthy)"},
     "A04": {"calibrated": False, "positives": [], "negatives": [],
             "target_note": "juice-shop insecure design (negative qty/price)"},
     "A05": {"calibrated": False, "positives": [], "negatives": [],
             "target_note": "dvwa misconfig (dir listing / phpinfo)"},
-    "A06": {"calibrated": False, "positives": [], "negatives": [],
-            "target_note": "juice-shop vulnerable components (fuzzy ground truth)"},
+    "A06": {
+        "calibrated": True,
+        "target_note": "juice-shop /rest/admin/application-version (identification task)",
+        "positives": [
+            '{"version":"20.3.0"}',
+            'app-version: {"version":"20.3.0"}',
+        ],
+        "negatives": [
+            "<title>OWASP Juice Shop</title>",
+            "Angular version 15.2.0 loaded",
+            "",
+        ],
+    },
     "A07": {"calibrated": False, "positives": [], "negatives": [],
             "target_note": "dvwa auth failures"},
     "A08": {"calibrated": False, "positives": [], "negatives": [],
