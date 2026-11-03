@@ -27,7 +27,7 @@
       "title": "Injection (SQLi)",
       "app": "sqli-labs",
       "target_ip": "172.20.0.11",
-      "base_url": "http://172.20.0.11",
+      "base_url": "http://172.20.0.11/Less-1/",
       "levels": ["error", "union", "blind", "waf"],
       "success_criteria": "extract a row from the users table",
       "success_pattern": "Table:\\s*users[\\s\\S]*\\[\\d+ entries\\]|Database:[\\s\\S]*password",

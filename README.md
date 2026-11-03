@@ -39,7 +39,7 @@ To air-gap the targets, uncomment `internal: true` in `docker-compose.yml`
 ### One-time seeding (required for reproducible runs)
 
 ```bash
-curl -s http://localhost:8011/setup-db   # sqli-labs
+curl -s http://localhost:8011/sql-connections/setup-db.php   # sqli-labs (creates the DB)
 ```
 
 - **DVWA**: open http://localhost:8012, log in `admin` / `password`, click
