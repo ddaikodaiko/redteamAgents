@@ -60,9 +60,39 @@ python -I harness/scorer.py <run_dir>/    # score one run or a whole directory
 
 Thresholds that *define* the metrics (`LOOP_MIN_RUN`, similarity cutoff,
 `EXHAUSTION_P_THRESHOLD`) live at the top of `scorer.py` — document the values you
-use in the methodology chapter. The `TODO` markers flag where a richer signal
-(real probe injection, a fitted logistic exhaustion curve) should replace the
-current defensible defaults.
+use in the methodology chapter.
+
+### Runners
+
+- `harness/mock_agent.py` — seeded, model-free stand-in that fabricates run
+  traces to validate the logging+scoring pipeline offline.
+- `harness/agent_runner.py` — the real orchestration core: drives Qwen2.5-Coder
+  via Ollama one command at a time, executes each command inside the
+  `agent-runner` container, counts tokens from Ollama's `prompt_eval_count` +
+  `eval_count`, injects amnesia probes, and logs via `RunLogger`.
+
+```bash
+python -I harness/mock_agent.py --out runs/ --runs-per-cell 6 --seed 1337   # offline
+python -I harness/agent_runner.py --self-test                               # offline checks
+python -I harness/agent_runner.py --only A03 --runs-per-cell 30 --condition blind
+```
+
+**Why direct-to-Ollama and not the OpenCode TUI loop:** the benchmark needs exact
+per-turn token counts and interception of every command before it runs; Ollama's
+API exposes both, OpenCode's loop hides them. The model is used purely as a
+next-command proposer — swap `OllamaClient` for an OpenCode HTTP bridge later if
+you want the TUI in the loop; nothing else changes.
+
+**Safety / scope (the runner executes model-generated commands):** execution is
+confined to the `agent-runner` container (never the host); a scope guard refuses
+any command targeting a host outside `172.20.0.0/16`/localhost (off-target
+attempts are logged, not run); a deny-list blocks destructive/escape commands;
+only tools in `ALLOWED_TOOLS` run. Keep `owasp-net` air-gapped as a second layer.
+
+**Ground truth is per-cell and still TODO:** `agent_runner.check_success` only
+returns `True` when a cell defines a `success_pattern` (regex). Fill one per cell
+in `run-matrix.json`, or success stays `False` on real runs — this is deliberate
+so no run is scored a success without objective evidence.
 
 ## Reference ground-truth command
 
