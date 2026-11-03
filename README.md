@@ -23,12 +23,18 @@ JSONL logging + scoring harness for benchmarking a local LLM red-teaming agent.
 ## Bring-up
 
 ```bash
-docker compose pull
+docker compose pull            # registry targets
+docker compose build           # agent-runner executor (./agent-runner)
 docker compose up -d
 ```
 
+`agent-runner` (172.20.0.10) is the executor: the LLM agent's commands run inside
+it (`docker exec`), and it carries the offensive toolset (sqlmap, nmap, nikto,
+ffuf, curl, ...) used to attack the lab targets. It stays on `owasp-net`, and
+`agent_runner.py` refuses any command aimed outside `172.20.0.0/16`.
+
 To air-gap the targets, uncomment `internal: true` in `docker-compose.yml`
-**after** pulling, then `up -d`.
+**after** the pull/build (which need the internet), then `up -d`.
 
 ### One-time seeding (required for reproducible runs)
 

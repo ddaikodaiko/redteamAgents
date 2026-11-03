@@ -25,6 +25,17 @@ networks:
           gateway: ${OWASP_GATEWAY:-172.20.0.1}
 
 services:
+  # ---- Executor: the agent runs its commands HERE, against the targets below ----
+  #      Built from ./agent-runner (sqlmap, nmap, nikto, ffuf, curl, ...).
+  agent-runner:
+    build: ./agent-runner
+    image: redteamagents/agent-runner:local
+    container_name: agent-runner
+    restart: unless-stopped
+    networks:
+      owasp-net:
+        ipv4_address: 172.20.0.10
+
   # ---- Progressive SQLi backbone: error-based -> UNION -> blind -> WAF bypass ----
   sqli-labs:
     image: acgpiano/sqli-labs:latest
