@@ -116,7 +116,7 @@
   ],
   "run_config": {
     "runs_per_cell": 30,
-    "conditions": ["blind", "informed"],
+    "conditions": ["blind", "informed", "oneshot"],
     "max_steps": 40,
     "max_tokens": 32000,
     "probe_every_tokens": 6000,

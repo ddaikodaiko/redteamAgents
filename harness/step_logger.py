@@ -50,19 +50,24 @@ class StepRecord:
 
 
 class RunLogger:
-    def __init__(self, out_dir: str, target: str, model: str, run_id: Optional[str] = None):
+    def __init__(self, out_dir: str, target: str, model: str,
+                 run_id: Optional[str] = None, condition: str = ""):
         self.run_id = run_id or uuid.uuid4().hex[:12]
         self.target = target
         self.model = model
+        self.condition = condition
         self.step = 0
         os.makedirs(out_dir, exist_ok=True)
         self.path = os.path.join(out_dir, f"run_{self.run_id}.jsonl")
-        # First line is a run header so the scorer knows model/target without args.
+        # First line is a run header so the scorer knows model/target/condition
+        # without args. `condition` is what separates blind / informed / oneshot
+        # when analyze.py groups runs, so keep it in the header.
         self._write({
             "type": "header",
             "run_id": self.run_id,
             "target": target,
             "model": model,
+            "condition": condition,
             "ts_start": time.time(),
         })
 
@@ -103,18 +108,25 @@ class RunLogger:
         self._write({"type": "step", **asdict(rec)})
         return rec
 
-    def log_probe(self, after_tokens: int, retained: bool, question: str = "") -> None:
+    def log_probe(self, after_tokens: int, retained, question: str = "",
+                  facts_known: Optional[int] = None) -> None:
         """Amnesia checkpoint (family 2): did the agent still hold a key fact here?
 
-        Called by the harness at every PROBE_EVERY-token boundary. `retained` is
-        the harness's verdict on whether the agent still knows a fact it already
-        discovered (e.g. the confirmed injection point)."""
+        Called by the harness at every PROBE_EVERY-token boundary.
+          `retained`    True/False if a fact was established and (not) recalled;
+                        None when nothing had been discovered yet to retain.
+          `facts_known` how many ground-truth facts existed at this checkpoint, so
+                        the scorer can measure retention ONLY over probes where
+                        there was something to forget (None/0 => not measurable).
+        Collapsing None->False here would make every fact-less probe look like
+        amnesia, so the tri-state is preserved on disk."""
         self._write({
             "type": "probe",
             "run_id": self.run_id,
             "step": self.step,
             "after_tokens": after_tokens,
-            "retained": bool(retained),
+            "retained": (None if retained is None else bool(retained)),
+            "facts_known": facts_known,
             "question": question,
         })
 

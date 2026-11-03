@@ -103,22 +103,40 @@ def loop_metrics(steps: list[dict]) -> dict:
 
 
 # ----------------------------- Metric family 2 -----------------------------
+def _probe_measurable(p: dict) -> bool:
+    """A probe measures amnesia only if a fact actually existed to be retained.
+
+    New records carry `facts_known` (int). Legacy records don't; for those, only
+    a retained==True probe proves a fact existed, so we count just those as
+    measurable (conservative: never invents amnesia the data can't support)."""
+    fk = p.get("facts_known")
+    if fk is not None:
+        return fk > 0
+    return p.get("retained") is True
+
+
 def amnesia_metrics(steps: list[dict], probes: Optional[list[dict]] = None) -> dict:
     """
     Context-window amnesia.
 
-    `probes` is an optional list of checkpoints the harness recorded, e.g.
-      {"after_tokens": 8000, "retained": True}   # did it still name the vuln param?
-    Fact Retention Rate = fraction of probes that passed.
+    `probes` is the list of checkpoints the harness recorded, e.g.
+      {"after_tokens": 8000, "retained": True, "facts_known": 2}
 
-    TODO: wire real probe injection into the harness. Until then we fall back to a
-    proxy: re-issuing a command whose output the agent already held (duplicate
-    stdout hash seen earlier in the run), which indicates it "forgot" the result.
+    Fact Retention Rate = retained / probes-with-a-fact. CRITICAL: a probe where
+    nothing had been discovered yet (`facts_known` 0, `retained` null) is NOT
+    counted as a miss — "never knew it" is not "forgot it". Folding those in would
+    report spurious amnesia on every run that never establishes a fact (exactly
+    the blind/ffuf-loop runs), so they are excluded from the denominator.
     """
     retention = None
+    probes_total = probes_with_fact = amnesia_events = 0
     if probes:
-        passed = sum(1 for p in probes if p.get("retained"))
-        retention = passed / max(len(probes), 1)
+        probes_total = len(probes)
+        measurable = [p for p in probes if _probe_measurable(p)]
+        probes_with_fact = len(measurable)
+        passed = sum(1 for p in measurable if p.get("retained") is True)
+        amnesia_events = sum(1 for p in measurable if p.get("retained") is False)
+        retention = (passed / probes_with_fact) if probes_with_fact else None
 
     seen_hashes: set[str] = set()
     reacquisitions = 0
@@ -129,8 +147,11 @@ def amnesia_metrics(steps: list[dict], probes: Optional[list[dict]] = None) -> d
         seen_hashes.add(h)
 
     return {
-        "fact_retention_rate": retention,                 # None until probes wired in
-        "reacquisition_count": reacquisitions,            # proxy signal
+        "fact_retention_rate": retention,       # None when no probe had a fact to retain
+        "probes_total": probes_total,           # all checkpoints crossed
+        "probes_with_fact": probes_with_fact,   # measurable denominator
+        "amnesia_events": amnesia_events,        # fact established then NOT recalled
+        "reacquisition_count": reacquisitions,   # proxy: re-ran a command it already had
         "reacquisition_ratio": reacquisitions / max(len(steps), 1),
     }
 
