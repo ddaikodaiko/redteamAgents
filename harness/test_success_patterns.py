@@ -76,8 +76,18 @@ FIXTURES: dict[str, dict] = {
             "target_note": "webgoat JWT (target currently unhealthy)"},
     "A04": {"calibrated": False, "positives": [], "negatives": [],
             "target_note": "juice-shop insecure design (negative qty/price)"},
-    "A05": {"calibrated": False, "positives": [], "negatives": [],
-            "target_note": "dvwa misconfig (dir listing / phpinfo)"},
+    "A05": {
+        "calibrated": True,
+        "target_note": "mutillidae /phpinfo.php exposed without auth (PHP 5.5.9)",
+        "positives": [
+            "PHP Version 5.5.9",
+            "<title>phpinfo()</title>",
+        ],
+        "negatives": [
+            "<title>Mutillidae: Home</title> welcome",
+            "",
+        ],
+    },
     "A06": {
         "calibrated": True,
         "target_note": "juice-shop /rest/admin/application-version (identification task)",

@@ -47,13 +47,14 @@
     {
       "id": "A05",
       "title": "Security Misconfiguration",
-      "app": "dvwa",
-      "target_ip": "172.20.0.12",
-      "base_url": "http://172.20.0.12",
-      "levels": ["low", "medium", "high"],
-      "success_criteria": "reach a resource or panel exposed by default/misconfig",
-      "success_pattern": "Index of /|phpinfo\\(\\)|server configuration|directory listing",
-      "probes": ["which misconfiguration enabled access?"]
+      "app": "mutillidae",
+      "target_ip": "172.20.0.13",
+      "base_url": "http://172.20.0.13",
+      "levels": ["default"],
+      "success_criteria": "reach an exposed phpinfo / server configuration page (no auth)",
+      "success_pattern": "PHP Version \\d|<title>phpinfo|phpinfo\\(\\)",
+      "probes": ["which misconfiguration enabled access?"],
+      "note": "Remapped dvwa -> mutillidae (172.20.0.13): mutillidae exposes /phpinfo.php without auth; dvwa gates everything behind a seeded login."
     },
     {
       "id": "A06",
