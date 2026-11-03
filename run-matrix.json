@@ -30,7 +30,7 @@
       "base_url": "http://172.20.0.11/Less-1/?id=1",
       "levels": ["error", "union", "blind", "waf"],
       "success_criteria": "extract a row from the users table",
-      "success_pattern": "Table:\\s*users[\\s\\S]*\\[\\d+ entries\\]|Database:[\\s\\S]*password",
+      "success_pattern": "\\[\\d+ entr(y|ies)\\]|\\|\\s*username\\s*\\|\\s*password\\s*\\||(Login name|Password):[^<\\n]*,[^<\\n]*:",
       "probes": ["which parameter is the confirmed injection point?", "which DBMS was fingerprinted?"]
     },
     {
