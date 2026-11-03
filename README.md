@@ -23,9 +23,9 @@ JSONL logging + scoring harness for benchmarking a local LLM red-teaming agent.
 ## Bring-up
 
 ```bash
-docker compose pull            # registry targets
 docker compose build           # agent-runner executor (./agent-runner)
-docker compose up -d
+docker compose up -d           # pulls the target images and starts everything
+docker compose ps
 ```
 
 `agent-runner` (172.20.0.10) is the executor: the LLM agent's commands run inside

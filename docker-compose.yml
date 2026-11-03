@@ -30,6 +30,7 @@ services:
   agent-runner:
     build: ./agent-runner
     image: redteamagents/agent-runner:local
+    pull_policy: build          # local image; never attempt a registry pull
     container_name: agent-runner
     restart: unless-stopped
     networks:
@@ -60,7 +61,7 @@ services:
 
   # ---- Mid-difficulty filtered SQLi, security levels 0/1/5 ----
   mutillidae:
-    image: webpwnized/mutillidae:latest
+    image: citizenstig/nowasp:latest
     container_name: mutillidae
     restart: unless-stopped
     ports:

@@ -10,10 +10,11 @@ FROM debian:bookworm-slim
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Toolset. Matches ALLOWED_TOOLS in harness/agent_runner.py.
+# (nikto is not packaged on Debian bookworm; installed from source below. perl +
+#  SSL modules are its runtime deps and are not in the slim base image.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
         sqlmap \
         nmap \
-        nikto \
         curl \
         wget \
         jq \
@@ -24,7 +25,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         dirb \
         netcat-openbsd \
         iputils-ping \
+        perl \
+        libnet-ssleay-perl \
+        libio-socket-ssl-perl \
     && rm -rf /var/lib/apt/lists/*
+
+# nikto from the official source (Perl), wrapped as /usr/local/bin/nikto.
+RUN git clone --depth 1 https://github.com/sullo/nikto.git /opt/nikto \
+    && printf '#!/bin/sh\nexec perl /opt/nikto/program/nikto.pl "$@"\n' > /usr/local/bin/nikto \
+    && chmod +x /usr/local/bin/nikto
 
 # ffuf: static Go binary from the official release (not packaged on bookworm).
 RUN ARCH="$(dpkg --print-architecture)" \
