@@ -4,6 +4,10 @@ runs/
 runs_a09/
 *.jsonl
 
+# Generated figures (reproducible via harness/plots.py)
+figures/
+fig*_*.png
+
 # Python
 __pycache__/
 *.py[cod]
