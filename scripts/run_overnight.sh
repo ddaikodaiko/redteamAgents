@@ -17,14 +17,15 @@
 set -u
 cd "$(dirname "$0")/.."
 
-N="${1:-30}"                 # runs per cell per condition
-CATS="A01 A05 A06 A03"       # calibrated + reachable (easy -> hard)
+N="${1:-30}"                            # runs per cell per condition
+CATS="${CATS:-A01 A05 A06 A03}"         # override via env: CATS="A03" ...
+CONDS="${CONDS:-oneshot blind informed}" # override via env: CONDS="guided" ...
 RUNNER="python3 -I harness/agent_runner.py"
 LOG="runs/overnight_$(date +%Y%m%d_%H%M%S).log"
 mkdir -p runs
 
-echo "START $(date)  N=$N  cats=[$CATS]" | tee -a "$LOG"
-for COND in oneshot blind informed; do
+echo "START $(date)  N=$N  conds=[$CONDS]  cats=[$CATS]" | tee -a "$LOG"
+for COND in $CONDS; do
   for C in $CATS; do
     echo "=== $(date +%F_%H:%M:%S)  $C  $COND  x$N ===" | tee -a "$LOG"
     # keep going even if one cell errors out
