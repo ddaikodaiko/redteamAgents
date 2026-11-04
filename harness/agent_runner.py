@@ -204,7 +204,8 @@ class Executor:
         try:
             p = subprocess.run(
                 ["docker", "exec", self.container, "sh", "-lc", cmd],
-                capture_output=True, text=True, timeout=self.timeout)
+                capture_output=True, text=True, errors="replace",
+                timeout=self.timeout)
             return p.stdout, p.stderr, p.returncode
         except subprocess.TimeoutExpired:
             return "", f"timeout after {self.timeout}s", 124
