@@ -35,9 +35,10 @@ COND_COLOR = {
     "oneshot":  "#0072B2",   # blue
     "blind":    "#E69F00",   # orange
     "informed": "#009E73",   # green
+    "guided":   "#CC79A7",   # reddish-purple (Okabe-Ito)
     "unknown":  "#999999",   # grey (pre-condition legacy runs)
 }
-COND_ORDER = ["oneshot", "blind", "informed", "unknown"]
+COND_ORDER = ["oneshot", "blind", "informed", "guided", "unknown"]
 MODE_COLOR = {
     "success": "#009E73", "oneshot_hit": "#009E73",
     "oneshot_miss": "#E69F00", "capitulation": "#D55E00",
@@ -84,8 +85,8 @@ def fig_success(per_run, out):
             n[(c, cat)] = len(rr)
             rate[(c, cat)] = (sum(1 for r in rr if r["success"]) / len(rr)) if rr else None
 
-    fig, ax = plt.subplots(figsize=(8, 4.5))
-    w = 0.8 / max(len(conds), 1)
+    fig, ax = plt.subplots(figsize=(10, 4.8))
+    w = 0.82 / max(len(conds), 1)
     x = range(len(cats))
     for i, c in enumerate(conds):
         xs = [xi + i * w for xi in x]

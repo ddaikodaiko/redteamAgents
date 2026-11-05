@@ -211,6 +211,10 @@ def exhaustion_point(runs: list[dict], bin_tokens: int = 2000) -> dict:
         steps = r["steps"]
         if not steps:
             continue
+        # F4 is about LOOP exhaustion: exclude one-shot (single-step) runs, which
+        # always terminate at ~1 step / ~200 tokens and would pollute the low bins.
+        if r["header"].get("condition") == "oneshot" or len(steps) < 2:
+            continue
         final_tokens = steps[-1]["cumulative_tokens"]
         success = bool(r["footer"].get("success"))
         b = (final_tokens // bin_tokens) * bin_tokens
