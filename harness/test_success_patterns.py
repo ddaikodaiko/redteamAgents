@@ -74,8 +74,19 @@ FIXTURES: dict[str, dict] = {
     },
     "A02": {"calibrated": False, "positives": [], "negatives": [],
             "target_note": "webgoat JWT (target currently unhealthy)"},
-    "A04": {"calibrated": False, "positives": [], "negatives": [],
-            "target_note": "juice-shop insecure design (negative qty/price)"},
+    "A04": {
+        "calibrated": True,
+        "target_note": "juice-shop /api/BasketItems accepts negative quantity (confirmed live)",
+        "positives": [
+            '{"status":"success","data":{"id":9,"ProductId":1,"BasketId":"6","quantity":-10}}',
+            '"totalPrice": -5.0',
+        ],
+        "negatives": [
+            '{"quantity":10,"ProductId":1}',
+            '"quantity":0',
+            "",
+        ],
+    },
     "A05": {
         "calibrated": True,
         "target_note": "mutillidae /phpinfo.php exposed without auth (PHP 5.5.9)",

@@ -41,7 +41,7 @@
       "base_url": "http://172.20.0.15:3000",
       "levels": ["default"],
       "success_criteria": "complete a business-logic abuse (e.g. price/coupon manipulation)",
-      "success_pattern": "(price|quantity|totalPrice)\\s*[:=]\\s*-\\d|coupon.*applied",
+      "success_pattern": "(price|quantity|totalPrice)[\\\"'\\s]*[:=][\\\"'\\s]*-\\d|coupon.*applied",
       "probes": ["which workflow step lacked a server-side check?"]
     },
     {
