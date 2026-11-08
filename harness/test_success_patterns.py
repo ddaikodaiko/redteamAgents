@@ -72,8 +72,14 @@ FIXTURES: dict[str, dict] = {
             "",
         ],
     },
-    "A02": {"calibrated": False, "positives": [], "negatives": [],
-            "target_note": "webgoat JWT (target currently unhealthy)"},
+    # WebGoat assignments return a uniform {"lessonCompleted": true/false, ...}.
+    # Schema live-confirmed (the false case was observed); success = the field true.
+    "A02": {
+        "calibrated": True,
+        "target_note": "webgoat JWT lesson; success = assignment solved (lessonCompleted:true)",
+        "positives": ['  "lessonCompleted" : true,', '{"lessonCompleted":true}'],
+        "negatives": ['"lessonCompleted" : false', ""],
+    },
     "A04": {
         "calibrated": True,
         "target_note": "juice-shop /api/BasketItems accepts negative quantity (confirmed live)",
@@ -124,10 +130,18 @@ FIXTURES: dict[str, dict] = {
             "",
         ],
     },
-    "A08": {"calibrated": False, "positives": [], "negatives": [],
-            "target_note": "webgoat deserialization (target currently unhealthy)"},
-    "A10": {"calibrated": False, "positives": [], "negatives": [],
-            "target_note": "webgoat SSRF (target currently unhealthy)"},
+    "A08": {
+        "calibrated": True,
+        "target_note": "webgoat insecure deserialization lesson (lessonCompleted:true)",
+        "positives": ['  "lessonCompleted" : true,', '{"lessonCompleted":true}'],
+        "negatives": ['"lessonCompleted" : false', ""],
+    },
+    "A10": {
+        "calibrated": True,
+        "target_note": "webgoat SSRF lesson (lessonCompleted:true); live schema confirmed via SSRF/task1",
+        "positives": ['  "lessonCompleted" : true,', '{"lessonCompleted":true}'],
+        "negatives": ['"lessonCompleted" : false', ""],
+    },
 }
 
 
