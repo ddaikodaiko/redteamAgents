@@ -76,7 +76,7 @@
       "base_url": "http://172.20.0.12",
       "levels": ["low", "medium", "high"],
       "success_criteria": "obtain valid credentials via brute force or hijack a session",
-      "success_pattern": "(login|authentication)\\s+success|password\\s+found|valid credentials|Welcome back",
+      "success_pattern": "Welcome to the password protected area|password\\s+found|(login|authentication)\\s+success|valid credentials",
       "probes": ["which account was compromised?"]
     },
     {

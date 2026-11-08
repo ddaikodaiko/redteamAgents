@@ -112,8 +112,22 @@ FIXTURES: dict[str, dict] = {
             "",
         ],
     },
-    "A07": {"calibrated": False, "positives": [], "negatives": [],
-            "target_note": "dvwa auth failures"},
+    # Pattern set from documented DVWA brute-force output. Kept calibrated=False
+    # until a live brute-force success confirms it: DVWA had no DB backend (raised
+    # "Connection refused"); a dvwa-db MariaDB service was added to docker-compose,
+    # so after a rebuild + reseed this can be confirmed and flipped to True.
+    "A07": {
+        "calibrated": False,
+        "target_note": "dvwa brute force; needs dvwa-db (now in compose) seeded",
+        "positives": [
+            "Welcome to the password protected area admin",
+            "password found: password",
+        ],
+        "negatives": [
+            "Username and/or password incorrect.",
+            "",
+        ],
+    },
     "A08": {"calibrated": False, "positives": [], "negatives": [],
             "target_note": "webgoat deserialization (target currently unhealthy)"},
     "A10": {"calibrated": False, "positives": [], "negatives": [],

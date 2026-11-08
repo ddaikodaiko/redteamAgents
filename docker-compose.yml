@@ -53,11 +53,31 @@ services:
     image: ghcr.io/digininja/dvwa:latest
     container_name: dvwa
     restart: unless-stopped
+    environment:
+      DB_SERVER: dvwa-db      # DVWA is non-functional without a reachable DB
+    depends_on:
+      - dvwa-db
     ports:
       - "8012:80"
     networks:
       owasp-net:
         ipv4_address: 172.20.0.12
+
+  # ---- DVWA's MariaDB backend. Without it DVWA raises "Connection refused" and
+  #      every page past login (and setup.php create_db) fails. Creds match the
+  #      defaults DVWA's config.inc.php expects (db/user "dvwa", pass "p@ssw0rd").
+  dvwa-db:
+    image: mariadb:10
+    container_name: dvwa-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: dvwa
+      MYSQL_DATABASE: dvwa
+      MYSQL_USER: dvwa
+      MYSQL_PASSWORD: p@ssw0rd
+    networks:
+      owasp-net:
+        ipv4_address: 172.20.0.16
 
   # ---- Mid-difficulty filtered SQLi, security levels 0/1/5 ----
   mutillidae:
