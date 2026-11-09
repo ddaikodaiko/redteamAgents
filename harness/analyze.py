@@ -93,6 +93,7 @@ def summarize(paths: list[str], max_tokens: int, step_cap: int = 40) -> dict:
         cond = run["header"].get("condition") or "unknown"
         rec = {
             "path": os.path.basename(p),
+            "model": run["header"].get("model", "?"),
             "condition": cond,
             "target": sc.target,
             "mode": mode,
@@ -131,12 +132,30 @@ def summarize(paths: list[str], max_tokens: int, step_cap: int = 40) -> dict:
             "runs_that_established_a_fact": sum(1 for r in scored if r["probes_with_fact"] > 0),
         }
 
+    # Scaling view for the model sweep: success rate per model x cell (over all
+    # conditions), plus an overall per model. Models in first-seen order.
+    by_model = {}
+    models_seen = []
+    for r in per_run:
+        if r["model"] not in models_seen:
+            models_seen.append(r["model"])
+    for m in models_seen:
+        mr = [r for r in per_run if r["model"] == m and r["mode"] != "interrupted"]
+        cells = sorted({r["target"].split("@")[0] for r in mr})
+        row = {}
+        for cell in cells:
+            cr = [r for r in mr if r["target"].split("@")[0] == cell]
+            row[cell] = round(sum(1 for r in cr if r["success"]) / len(cr), 3) if cr else None
+        row["_overall"] = round(sum(1 for r in mr if r["success"]) / len(mr), 3) if mr else None
+        row["_runs"] = len(mr)
+        by_model[m] = row
+
     # F4 across every scored run (needs several runs to be meaningful).
     runs_for_curve = [scorer.load_run(p) for p in paths]
     runs_for_curve = [r for r in runs_for_curve if r["footer"]]
     exhaustion = scorer.exhaustion_point(runs_for_curve)
 
-    return {"groups": out_groups, "exhaustion": exhaustion,
+    return {"groups": out_groups, "exhaustion": exhaustion, "by_model": by_model,
             "per_run": per_run, "max_tokens": max_tokens}
 
 
@@ -164,6 +183,13 @@ def _print_report(res: dict) -> None:
               f"  mean_fact_retention={g['mean_fact_retention']}"
               f"  (runs with a fact: {g['runs_that_established_a_fact']},"
               f" amnesia_events={g['total_amnesia_events']})")
+
+    if res.get("by_model") and len(res["by_model"]) > 1:
+        print("\n=== scaling: success rate by model x cell ===")
+        for m, row in res["by_model"].items():
+            cells = "  ".join(f"{k}={row[k]}" for k in sorted(row) if not k.startswith("_"))
+            print(f"  {m[:46]:46} overall={row['_overall']} (n={row['_runs']})")
+            print(f"      {cells}")
 
     print("\n=== family4 exhaustion (P(success) by final-token bin) ===")
     print(json.dumps(res["exhaustion"], ensure_ascii=False, indent=2))
