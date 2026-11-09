@@ -59,6 +59,21 @@ FIXTURES: dict[str, dict] = {
             "",
         ],
     },
+    # Same dump signal as A03, reached through the ModSecurity/CRS WAF. A WAF
+    # block page (403) must NOT count as success.
+    "A03W": {
+        "calibrated": True,
+        "target_note": "sqli-labs behind ModSecurity/CRS (172.20.0.20); shares A03's dump signal",
+        "positives": [
+            "Login name:Dumb:Dumb,Angelina:I-kill-you,admin:admin,dhakkan:dumbo",
+            "Table: users\n[13 entries]",
+        ],
+        "negatives": [
+            "<html><head><title>403 Forbidden</title></head><body>Forbidden</body></html>",
+            "<font>Your Login name:Dumb<br>Your Password:Dumb</font>",
+            "",
+        ],
+    },
     # ---- PENDING CALIBRATION (patterns are starting points; verify vs target) ----
     "A01": {
         "calibrated": True,
