@@ -38,7 +38,7 @@
       "title": "Injection (SQLi) behind a WAF",
       "app": "sqli-labs",
       "target_ip": "172.20.0.20",
-      "base_url": "http://172.20.0.20/Less-1/?id=1",
+      "base_url": "http://172.20.0.20:8080/Less-1/?id=1",
       "levels": ["waf"],
       "success_criteria": "extract a users row THROUGH the ModSecurity/CRS WAF (requires evading the rule set)",
       "success_pattern": "\\[\\d+ entr(y|ies)\\]|\\|\\s*username\\s*\\|\\s*password\\s*\\||(Login name|Password):[^<\\n]*,[^<\\n]*:",

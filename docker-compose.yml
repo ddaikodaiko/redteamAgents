@@ -125,7 +125,7 @@ services:
       ANOMALY_INBOUND: "5"
       ANOMALY_OUTBOUND: "4"
     ports:
-      - "8020:80"
+      - "8020:8080"
     depends_on:
       - sqli-labs
     networks:
