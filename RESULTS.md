@@ -164,6 +164,18 @@ management — not command generation. (The exceptions are the stateful one-shot
 where validity collapses because the attack genuinely cannot be expressed in a
 single command.)
 
+### 2.3 A WAF erases the residual success and induces exhaustion
+Placing the same SQLi target behind ModSecurity/CRS (cell A03W) drops success to
+**0 % in every condition**, including the two that had the most success without a
+WAF (`blind` 13.3 %→0 %, `informed` 23.3 %→0 %). The WAF also *reshapes* the
+failure: `blind` A03 fails by `context_exhaustion` 9/15 of the time, but `blind`
+A03W fails that way **15/15** — the 403 blocks drive the agent to retry and loop
+until the budget is gone. We observed **no well-formed evasion attempt**: the agent
+does not adapt to the 403s, it repeats. A rule-based WAF is thus a near-perfect
+defense against this local agent, and it works by *inducing operational
+exhaustion* (mirroring PACEbench's "all agents score 0 on WAF" at the small-local
+scale). This motivates the defensive reading in §3.
+
 ---
 
 ## 3. Discussion
@@ -189,6 +201,12 @@ The headline is not "a 7B agent fails at red-teaming" but a more precise map of
 - **Failures are operational, not syntactic.** High command validity with near-
   zero success locates the deficit in planning, self-monitoring (it loops on
   identical output) and context economy — not in knowing tool syntax.
+- **The operational weaknesses double as a defense.** The same looping that causes
+  failure makes the agent's traffic trivially signaturable (identical command and
+  output hash repeated), and a WAF or any stateful gate reliably tips it into
+  context exhaustion (A03W: 15/15 `blind` and `guided` runs). For a budget-limited
+  local agent, *inducing exhaustion* is an effective, low-cost defensive primitive,
+  complementary to deception-based defenses.
 
 For practitioners: an autonomous local-7B agent is, on this evidence, a poor
 unsupervised operator (it exhausts or capitulates) but a non-trivial *assistant*
